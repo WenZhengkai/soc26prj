@@ -1,0 +1,1 @@
+Warning (10268): Verilog HDL information at AHB2MEM.v(54): always construct contains both blocking and non-blocking assignments File: E:/soc26prj/soc-wuxi-arm/arm-soc/AHB2MEM.v Line: 54

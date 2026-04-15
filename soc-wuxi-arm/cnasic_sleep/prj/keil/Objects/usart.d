@@ -1,0 +1,9 @@
+.\objects\usart.o: ..\..\Chip\Hal_lib\usart.c
+.\objects\usart.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\usart.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\usart.o: ..\..\Chip\Hal_lib\inc\drv_usart.h
+.\objects\usart.o: ..\..\Chip\Hal_lib\inc\usart.h
+.\objects\usart.o: ..\..\Chip\Startup\inc\soc.h
+.\objects\usart.o: ..\..\Chip\CMSIS\core_cm3.h
+.\objects\usart.o: ..\..\Chip\Hal_lib\inc\nvic.h
+.\objects\usart.o: ..\..\Chip\Startup\inc\soc.h

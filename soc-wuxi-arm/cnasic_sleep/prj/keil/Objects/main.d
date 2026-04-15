@@ -1,0 +1,11 @@
+.\objects\main.o: ..\..\App\main.c
+.\objects\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
+.\objects\main.o: D:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\objects\main.o: ..\..\Chip\Hal_lib\inc\nvic.h
+.\objects\main.o: ..\..\Chip\Startup\inc\soc.h
+.\objects\main.o: ..\..\Chip\CMSIS\core_cm3.h
+.\objects\main.o: ..\..\Chip\Hal_lib\inc\nvic.h
+.\objects\main.o: ..\..\Chip\Hal_lib\inc\drv_usart.h
+.\objects\main.o: ..\..\App\inc\delay.h
+.\objects\main.o: ..\..\Chip\Hal_lib\inc\usart.h
+.\objects\main.o: ..\..\Chip\Hal_lib\inc\gpio.h
