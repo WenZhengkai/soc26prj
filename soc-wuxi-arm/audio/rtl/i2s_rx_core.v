@@ -115,8 +115,7 @@ always @(posedge i2s_sck or negedge rst_n) begin
                     // Fix 1: 最后一拍：先移入当前位，再锁存输出
                     shift_reg    <= {shift_reg[SLOT_WIDTH-2:0], i2s_sd};
                     // Fix 4: 取高 SAMPLE_WIDTH 位（I2S MSB 先传）
-                    sample_data  <= {shift_reg[SLOT_WIDTH-2:0], i2s_sd}
-                                    [SLOT_WIDTH-1 -: SAMPLE_WIDTH];
+                    sample_data  <= shift_reg[SLOT_WIDTH - 2: SLOT_WIDTH - 1 - SAMPLE_WIDTH];
                     sample_valid <= 1'b1;
                     cnt          <= 0;
                 end else begin

@@ -1,0 +1,5 @@
+*.crt.mti
+*.mpf
+*.wlf
+work/
+**/work/

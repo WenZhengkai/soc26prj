@@ -1,0 +1,15 @@
+E:/soc26prj/soc-wuxi-arm/audio/tb/Phase2/testbench.sv {1 {vlog -work work -vopt -sv -stats=none E:/soc26prj/soc-wuxi-arm/audio/tb/Phase2/testbench.sv
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module tb_i2s_rx_core
+
+Top level modules:
+	tb_i2s_rx_core
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/audio/rtl/i2s_rx_core.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/audio/rtl/i2s_rx_core.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module i2s_rx_core
+
+Top level modules:
+	i2s_rx_core
+
+} {} {}}
