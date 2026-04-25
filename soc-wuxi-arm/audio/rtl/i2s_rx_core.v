@@ -71,17 +71,16 @@ always @(*) begin
         end
         LEFT: begin
             // Fix 1: SLOT_WIDTH-1 而非 SLOT_WIDTH
-            if (cnt == SLOT_WIDTH - 1)
-                next_state = RIGT;
-            else if (enter_right)       // 容错：WS 边沿提前
+
+            if (enter_right)       // 容错：WS 边沿提前
                 next_state = RIGT;
             else
                 next_state = LEFT;
         end
         RIGT: begin
-            if (cnt == SLOT_WIDTH - 1)
-                next_state = LEFT;
-            else if (enter_left)        // 容错：WS 边沿提前
+
+
+            if (enter_left)        // 容错：WS 边沿提前
                 next_state = LEFT;
             else
                 next_state = RIGT;
@@ -111,16 +110,21 @@ always @(posedge i2s_sck or negedge rst_n) begin
             end
 
             LEFT: begin
+                if (enter_right) begin
+                    cnt       <= 0;
+                end else begin
+                    cnt       <= cnt + 1;
+                end
                 if (cnt == SLOT_WIDTH - 1) begin
                     // Fix 1: 最后一拍：先移入当前位，再锁存输出
                     shift_reg    <= {shift_reg[SLOT_WIDTH-2:0], i2s_sd};
                     // Fix 4: 取高 SAMPLE_WIDTH 位（I2S MSB 先传）
                     sample_data  <= shift_reg[SLOT_WIDTH - 2: SLOT_WIDTH - 1 - SAMPLE_WIDTH];
                     sample_valid <= 1'b1;
-                    cnt          <= 0;
+                    // cnt          <= 0;
                 end else begin
                     shift_reg <= {shift_reg[SLOT_WIDTH-2:0], i2s_sd};
-                    cnt       <= cnt + 1;
+                    // cnt       <= cnt + 1;
                 end
             end
 
@@ -128,11 +132,16 @@ always @(posedge i2s_sck or negedge rst_n) begin
                 // Fix 2: 右声道不接收数据，但不清零 shift_reg
                 //        清零会破坏紧接其后左声道的首拍内容（无害但不规范）
                 //        此处复位 cnt 即可
-                if (cnt == SLOT_WIDTH - 1) begin
-                    cnt <= 0;
-                end else begin
-                    cnt <= cnt + 1;
-                end
+                // if (cnt == SLOT_WIDTH - 1) begin
+                //     cnt <= 0;
+                // end else begin
+                //     cnt <= cnt + 1;
+                // end
+                    if (enter_left) begin
+                        cnt <= 0;
+                    end else begin
+                        cnt <= cnt + 1;
+                    end
                 // 右声道数据直接丢弃（单声道模式）
             end
 

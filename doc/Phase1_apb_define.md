@@ -73,8 +73,8 @@
 ### 4.3 模块端口定义（建议）
 
 ```verilog
-module audio_fifo_apb #(
-    parameter FIFO_DEPTH = 256
+module audio_ctrl_apb #(
+    parameter FIFO_DEPTH = 16
 ) (
     input  wire        pclk,
     input  wire        presetn,
@@ -99,7 +99,8 @@ module audio_fifo_apb #(
 端口约束说明：
 - APB 为单周期 ready（`pready=1'b1`），简化 Phase1 集成。
 - `pslverr` 固定 0。
-- `sample_valid/sample_data` 与 `pclk` 同时钟域（Phase1 假设）；跨时钟问题在后续阶段处理。
+- `sample_valid/sample_data` 与 `pclk` 同时钟域（Phase1 假设, pclk分频得出了sample_valid/sample_data）；跨时钟问题在后续阶段处理。
+- `sample_valid`控制fifo写入, 但是由于是`pclk`分频时钟相关信号, sample_valid会持续多个`pclk`周期, 此处需要处理, 避免重复写入fifo
 
 ## 5. spi_flash 外设定义
 
