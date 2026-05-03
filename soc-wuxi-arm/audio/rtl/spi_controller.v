@@ -31,6 +31,7 @@ module spi_flash_apb_ctrl (
     localparam [7:0] CMD_RDSR = 8'h05;
     localparam [7:0] CMD_PP   = 8'h02;
     localparam [7:0] CMD_SE   = 8'h20;
+    localparam [7:0] CMD_READ = 8'h03;
 
     localparam [23:0] SECTOR_SIZE = 24'h001000;
 
@@ -43,7 +44,8 @@ module spi_flash_apb_ctrl (
     localparam [11:0] REG_CTRL       = 12'h008;
     localparam [11:0] REG_STATUS     = 12'h00C;
     localparam [11:0] REG_WDATA      = 12'h010;
-    localparam [11:0] REG_DEBUG_CNT  = 12'h014;
+    localparam [11:0] REG_RDATA      = 12'h014;
+    localparam [11:0] REG_DEBUG_CNT  = 12'h018;
 
     assign pready  = 1'b1;
     assign pslverr = 1'b0;
@@ -56,10 +58,14 @@ module spi_flash_apb_ctrl (
     wire wr_ctrl       = apb_write & (paddr == REG_CTRL);
     wire wr_status     = apb_write & (paddr == REG_STATUS);
     wire wr_wdata      = apb_write & (paddr == REG_WDATA);
+    wire rd_rdata      = apb_read & (paddr == REG_RDATA);
 
-    wire start_req    = wr_ctrl & pwdata[0];
-    wire abort_req    = wr_ctrl & pwdata[1];
-    wire clr_done_req = wr_ctrl & pwdata[2];
+    wire start_wr_req = wr_ctrl & pwdata[0];
+    wire start_rd_req = wr_ctrl & pwdata[1];
+    wire abort_req    = wr_ctrl & pwdata[2];
+    wire clr_done_req = wr_ctrl & pwdata[3];
+
+    wire start_any_req = start_wr_req | start_rd_req;
 
     // ============================================================
     // FSM states
@@ -89,6 +95,13 @@ module spi_flash_apb_ctrl (
     localparam [4:0] ST_PP_DATA_START    = 5'd15;
     localparam [4:0] ST_PP_DATA_WAIT     = 5'd16;
 
+    localparam [4:0] ST_RD_CMD_START     = 5'd20;
+    localparam [4:0] ST_RD_CMD_WAIT      = 5'd21;
+    localparam [4:0] ST_RD_ADDR_START    = 5'd22;
+    localparam [4:0] ST_RD_ADDR_WAIT     = 5'd23;
+    localparam [4:0] ST_RD_DATA_START    = 5'd24;
+    localparam [4:0] ST_RD_DATA_WAIT     = 5'd25;
+
     localparam [4:0] ST_FINISH           = 5'd17;
     localparam [4:0] ST_ERROR            = 5'd18;
     localparam [4:0] ST_ABORT            = 5'd19;
@@ -110,6 +123,7 @@ module spi_flash_apb_ctrl (
     reg        done_reg;
     reg        err_reg;
     reg        overflow_reg;
+    reg        underflow_reg;
 
     reg [23:0] debug_cnt_reg;
 
@@ -132,6 +146,12 @@ module spi_flash_apb_ctrl (
     reg [31:0] wbuf_reg;
     reg        wbuf_valid_reg;
     reg [1:0]  wbuf_byte_idx_reg;
+
+    reg        op_is_read_reg;
+
+    reg [31:0] rbuf_reg;
+    reg        rbuf_valid_reg;
+    reg [1:0]  rbuf_byte_idx_reg;
 
     // ============================================================
     // SPI module connection
@@ -210,13 +230,17 @@ module spi_flash_apb_ctrl (
         (byte_len_reg[1:0]   != 2'b00);
 
     wire wdata_ready_wire;
+    wire rdata_valid_wire;
 
     assign wdata_ready_wire =
         (state == ST_PP_DATA_NEED) &&
         busy_reg &&
+        !op_is_read_reg &&
         !wbuf_valid_reg &&
         (bytes_left_reg != 24'd0) &&
         !err_reg;
+
+    assign rdata_valid_wire = op_is_read_reg && rbuf_valid_reg;
 
     // ============================================================
     // APB read mux
@@ -241,13 +265,22 @@ module spi_flash_apb_ctrl (
 
                 REG_STATUS: begin
                     prdata = {
-                        27'd0,
+                        25'd0,
+                        underflow_reg,
                         overflow_reg,
+                        rdata_valid_wire,
                         wdata_ready_wire,
                         err_reg,
                         done_reg,
                         busy_reg
                     };
+                end
+
+                REG_RDATA: begin
+                    if (rdata_valid_wire)
+                        prdata = rbuf_reg;
+                    else
+                        prdata = 32'd0;
                 end
 
                 REG_DEBUG_CNT: begin
@@ -287,11 +320,18 @@ module spi_flash_apb_ctrl (
             case (state)
 
                 ST_IDLE: begin
-                    if (start_req && !busy_reg) begin
+                    if (start_wr_req && !busy_reg) begin
                         if ((byte_len_reg != 24'd0) &&
                             !addr_overflow &&
                             !align_error)
                             next_state = ST_ERASE_CHECK;
+                        else
+                            next_state = ST_IDLE;
+                    end else if (start_rd_req && !busy_reg) begin
+                        if ((byte_len_reg != 24'd0) &&
+                            !addr_overflow &&
+                            !align_error)
+                            next_state = ST_RD_CMD_START;
                         else
                             next_state = ST_IDLE;
                     end
@@ -406,6 +446,46 @@ module spi_flash_apb_ctrl (
                     end
                 end
 
+                ST_RD_CMD_START: begin
+                    next_state = ST_RD_CMD_WAIT;
+                end
+
+                ST_RD_CMD_WAIT: begin
+                    if (spi_done_wire)
+                        next_state = ST_RD_ADDR_START;
+                end
+
+                ST_RD_ADDR_START: begin
+                    next_state = ST_RD_ADDR_WAIT;
+                end
+
+                ST_RD_ADDR_WAIT: begin
+                    if (spi_done_wire) begin
+                        if (cmd_idx_reg == 2'd2)
+                            next_state = ST_RD_DATA_START;
+                        else
+                            next_state = ST_RD_ADDR_START;
+                    end
+                end
+
+                ST_RD_DATA_START: begin
+                    if ((bytes_left_reg == 24'd0) && !rbuf_valid_reg)
+                        next_state = ST_FINISH;
+                    else if (!rbuf_valid_reg && (bytes_left_reg != 24'd0))
+                        next_state = ST_RD_DATA_WAIT;
+                    else
+                        next_state = ST_RD_DATA_START;
+                end
+
+                ST_RD_DATA_WAIT: begin
+                    if (spi_done_wire) begin
+                        if (bytes_left_reg == 24'd1)
+                            next_state = ST_FINISH;
+                        else
+                            next_state = ST_RD_DATA_START;
+                    end
+                end
+
                 ST_FINISH: begin
                     next_state = ST_IDLE;
                 end
@@ -439,6 +519,7 @@ module spi_flash_apb_ctrl (
             done_reg            <= 1'b0;
             err_reg             <= 1'b0;
             overflow_reg        <= 1'b0;
+            underflow_reg       <= 1'b0;
 
             debug_cnt_reg       <= 24'd0;
 
@@ -461,6 +542,12 @@ module spi_flash_apb_ctrl (
             wbuf_reg            <= 32'd0;
             wbuf_valid_reg      <= 1'b0;
             wbuf_byte_idx_reg   <= 2'd0;
+
+            op_is_read_reg      <= 1'b0;
+
+            rbuf_reg            <= 32'd0;
+            rbuf_valid_reg      <= 1'b0;
+            rbuf_byte_idx_reg   <= 2'd0;
 
             flash_cs_n          <= 1'b1;
 
@@ -495,14 +582,20 @@ module spi_flash_apb_ctrl (
                 if (pwdata[2])
                     err_reg <= 1'b0;
 
-                if (pwdata[4])
+                if (pwdata[5])
                     overflow_reg <= 1'b0;
+
+                if (pwdata[6])
+                    underflow_reg <= 1'b0;
             end
 
             if (clr_done_req)
                 done_reg <= 1'b0;
 
-            if (start_req && busy_reg)
+            if (start_any_req && busy_reg)
+                err_reg <= 1'b1;
+
+            if (start_wr_req && start_rd_req)
                 err_reg <= 1'b1;
 
             if (wr_wdata) begin
@@ -519,6 +612,16 @@ module spi_flash_apb_ctrl (
                 end
             end
 
+            if (rd_rdata) begin
+                if (rdata_valid_wire) begin
+                    rbuf_valid_reg    <= 1'b0;
+                    rbuf_byte_idx_reg <= 2'd0;
+                    rbuf_reg          <= 32'd0;
+                end else begin
+                    underflow_reg <= 1'b1;
+                end
+            end
+
             // ----------------------------------------------------
             // Global abort
             // ----------------------------------------------------
@@ -528,9 +631,13 @@ module spi_flash_apb_ctrl (
                 busy_reg            <= 1'b0;
                 done_reg            <= 1'b0;
                 err_reg             <= 1'b1;
+                op_is_read_reg      <= 1'b0;
 
                 wbuf_valid_reg      <= 1'b0;
                 page_chunk_left_reg <= 9'd0;
+                rbuf_valid_reg      <= 1'b0;
+                rbuf_byte_idx_reg   <= 2'd0;
+                rbuf_reg            <= 32'd0;
 
             end else begin
                 case (state)
@@ -538,10 +645,11 @@ module spi_flash_apb_ctrl (
                     ST_IDLE: begin
                         flash_cs_n <= 1'b1;
 
-                        if (start_req && !busy_reg) begin
+                        if (start_wr_req && !busy_reg) begin
                             done_reg      <= 1'b0;
                             err_reg       <= 1'b0;
                             overflow_reg  <= 1'b0;
+                            underflow_reg <= 1'b0;
                             debug_cnt_reg <= 24'd0;
 
                             if (byte_len_reg == 24'd0) begin
@@ -550,6 +658,7 @@ module spi_flash_apb_ctrl (
                                 err_reg <= 1'b1;
                             end else begin
                                 busy_reg            <= 1'b1;
+                                op_is_read_reg      <= 1'b0;
 
                                 curr_addr_reg       <= start_addr_reg;
                                 bytes_left_reg      <= byte_len_reg;
@@ -562,8 +671,43 @@ module spi_flash_apb_ctrl (
                                 wbuf_valid_reg      <= 1'b0;
                                 wbuf_byte_idx_reg   <= 2'd0;
 
+                                rbuf_reg            <= 32'd0;
+                                rbuf_valid_reg      <= 1'b0;
+                                rbuf_byte_idx_reg   <= 2'd0;
+
                                 wren_target_reg     <= TARGET_ERASE;
                                 poll_target_reg     <= TARGET_ERASE;
+
+                                cmd_idx_reg         <= 2'd0;
+                                poll_count_reg      <= 32'd0;
+                                last_status_reg     <= 8'd0;
+                            end
+                        end else if (start_rd_req && !busy_reg) begin
+                            done_reg      <= 1'b0;
+                            err_reg       <= 1'b0;
+                            overflow_reg  <= 1'b0;
+                            underflow_reg <= 1'b0;
+                            debug_cnt_reg <= 24'd0;
+
+                            if (byte_len_reg == 24'd0) begin
+                                done_reg <= 1'b1;
+                            end else if (addr_overflow || align_error) begin
+                                err_reg <= 1'b1;
+                            end else begin
+                                busy_reg            <= 1'b1;
+                                op_is_read_reg      <= 1'b1;
+
+                                curr_addr_reg       <= start_addr_reg;
+                                bytes_left_reg      <= byte_len_reg;
+                                total_len_reg       <= byte_len_reg;
+
+                                wbuf_reg            <= 32'd0;
+                                wbuf_valid_reg      <= 1'b0;
+                                wbuf_byte_idx_reg   <= 2'd0;
+
+                                rbuf_reg            <= 32'd0;
+                                rbuf_valid_reg      <= 1'b0;
+                                rbuf_byte_idx_reg   <= 2'd0;
 
                                 cmd_idx_reg         <= 2'd0;
                                 poll_count_reg      <= 32'd0;
@@ -725,6 +869,84 @@ module spi_flash_apb_ctrl (
                                 flash_cs_n      <= 1'b1;
                                 poll_target_reg <= TARGET_PROGRAM;
                                 poll_count_reg  <= 32'd0;
+                            end
+                        end
+                    end
+
+                    ST_RD_CMD_START: begin
+                        flash_cs_n      <= 1'b0;
+                        spi_tx_data_reg <= CMD_READ;
+                        spi_start_reg   <= 1'b1;
+                    end
+
+                    ST_RD_CMD_WAIT: begin
+                        if (spi_done_wire)
+                            cmd_idx_reg <= 2'd0;
+                    end
+
+                    ST_RD_ADDR_START: begin
+                        flash_cs_n <= 1'b0;
+
+                        case (cmd_idx_reg)
+                            2'd0: spi_tx_data_reg <= curr_addr_reg[23:16];
+                            2'd1: spi_tx_data_reg <= curr_addr_reg[15:8];
+                            2'd2: spi_tx_data_reg <= curr_addr_reg[7:0];
+                            default: spi_tx_data_reg <= 8'h00;
+                        endcase
+
+                        spi_start_reg <= 1'b1;
+                    end
+
+                    ST_RD_ADDR_WAIT: begin
+                        if (spi_done_wire) begin
+                            if (cmd_idx_reg == 2'd2)
+                                cmd_idx_reg <= 2'd0;
+                            else
+                                cmd_idx_reg <= cmd_idx_reg + 2'd1;
+                        end
+                    end
+
+                    ST_RD_DATA_START: begin
+                        flash_cs_n <= 1'b0;
+
+                        if (!rbuf_valid_reg && (bytes_left_reg != 24'd0)) begin
+                            spi_tx_data_reg <= 8'h00;
+                            spi_start_reg   <= 1'b1;
+                        end
+                    end
+
+                    ST_RD_DATA_WAIT: begin
+                        if (spi_done_wire) begin
+                            if (rbuf_byte_idx_reg == 2'd0)
+                                rbuf_reg <= 32'd0;
+
+                            case (rbuf_byte_idx_reg)
+                                2'd0: rbuf_reg[7:0]   <= spi_rx_data_wire;
+                                2'd1: rbuf_reg[15:8]  <= spi_rx_data_wire;
+                                2'd2: rbuf_reg[23:16] <= spi_rx_data_wire;
+                                2'd3: rbuf_reg[31:24] <= spi_rx_data_wire;
+                                default: rbuf_reg[7:0] <= spi_rx_data_wire;
+                            endcase
+
+                            curr_addr_reg  <= curr_addr_reg + 24'd1;
+                            bytes_left_reg <= bytes_left_reg - 24'd1;
+                            debug_cnt_reg  <= debug_cnt_reg + 24'd1;
+
+                            if (bytes_left_reg == 24'd1) begin
+                                case (rbuf_byte_idx_reg)
+                                    2'd0: rbuf_reg[31:8]  <= 24'd0;
+                                    2'd1: rbuf_reg[31:16] <= 16'd0;
+                                    2'd2: rbuf_reg[31:24] <= 8'd0;
+                                    default: rbuf_reg[31:24] <= rbuf_reg[31:24];
+                                endcase
+                                rbuf_valid_reg    <= 1'b1;
+                                rbuf_byte_idx_reg <= 2'd0;
+                                flash_cs_n        <= 1'b1;
+                            end else if (rbuf_byte_idx_reg == 2'd3) begin
+                                rbuf_valid_reg    <= 1'b1;
+                                rbuf_byte_idx_reg <= 2'd0;
+                            end else begin
+                                rbuf_byte_idx_reg <= rbuf_byte_idx_reg + 2'd1;
                             end
                         end
                     end

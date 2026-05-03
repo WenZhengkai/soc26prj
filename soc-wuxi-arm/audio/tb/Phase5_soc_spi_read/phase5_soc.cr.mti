@@ -1,0 +1,183 @@
+E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_output_arb.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_output_arb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_ahb_bm_output_arb
+
+Top level modules:
+	cmsdk_ahb_bm_output_arb
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_ahb_to_apb.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_ahb_to_apb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_ahb_to_apb
+
+Top level modules:
+	cmsdk_ahb_to_apb
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/apb_subsystem.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/apb_subsystem.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_apb_subsystem
+
+Top level modules:
+	cmsdk_apb_subsystem
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/AHB2MEM.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/AHB2MEM.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module AHB2MEM
+
+Top level modules:
+	AHB2MEM
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_timer.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_timer.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_apb_timer
+
+Top level modules:
+	cmsdk_apb_timer
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/audio/rtl/audio_fifo.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/audio/rtl/audio_fifo.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module audio_fifo
+
+Top level modules:
+	audio_fifo
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/BusMatrix3x3_default_slave.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/BusMatrix3x3_default_slave.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module BusMatrix3x3_default_slave
+
+Top level modules:
+	BusMatrix3x3_default_slave
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/audio/rtl/i2s_rx_core.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/audio/rtl/i2s_rx_core.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module i2s_rx_core
+
+Top level modules:
+	i2s_rx_core
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_slave_mux.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_slave_mux.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_apb_slave_mux
+
+Top level modules:
+	cmsdk_apb_slave_mux
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/cortexm3ds_logic.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/cortexm3ds_logic.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cortexm3ds_logic
+
+Top level modules:
+	cortexm3ds_logic
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/audio/rtl/audio_ctrl_apb.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/audio/rtl/audio_ctrl_apb.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module audio_ctrl_apb
+
+Top level modules:
+	audio_ctrl_apb
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/BusMatrix3x3.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/BusMatrix3x3.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module BusMatrix3x3
+
+Top level modules:
+	BusMatrix3x3
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module gpio
+
+Top level modules:
+	gpio
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_apbif.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_apbif.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module gpio_apbif
+
+Top level modules:
+	gpio_apbif
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/audio/rtl/spi_module.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/audio/rtl/spi_module.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module spi_module
+
+Top level modules:
+	spi_module
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/top.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/top.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module top
+
+Top level modules:
+	top
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI0.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI0.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_ahb_bm_decodeSI0
+
+Top level modules:
+	cmsdk_ahb_bm_decodeSI0
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_ctrl.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_ctrl.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module gpio_ctrl
+
+Top level modules:
+	gpio_ctrl
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI1.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI1.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_ahb_bm_decodeSI1
+
+Top level modules:
+	cmsdk_ahb_bm_decodeSI1
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/audio/tb/Phase5_soc_spi_read/testbench.sv {1 {vlog -work work -vopt -sv -stats=none E:/soc26prj/soc-wuxi-arm/audio/tb/Phase5_soc_spi_read/testbench.sv
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module testbench
+
+Top level modules:
+	testbench
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI2.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI2.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_ahb_bm_decodeSI2
+
+Top level modules:
+	cmsdk_ahb_bm_decodeSI2
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/audio/rtl/spi_controller.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/audio/rtl/spi_controller.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module spi_flash_apb_ctrl
+
+Top level modules:
+	spi_flash_apb_ctrl
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/InputStage.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/InputStage.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module InputStage
+
+Top level modules:
+	InputStage
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/CORTEXM3INTEGRATIONDS.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/CORTEXM3INTEGRATIONDS.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module CORTEXM3INTEGRATIONDS
+
+Top level modules:
+	CORTEXM3INTEGRATIONDS
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/OutputStage.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/OutputStage.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module OutputStage
+
+Top level modules:
+	OutputStage
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_uart.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_uart.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_apb_uart
+
+Top level modules:
+	cmsdk_apb_uart
+
+} {} {}}

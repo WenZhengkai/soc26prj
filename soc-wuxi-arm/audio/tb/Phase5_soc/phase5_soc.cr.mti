@@ -54,6 +54,13 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	i2s_rx_core
 
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_slave_mux.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_slave_mux.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module cmsdk_apb_slave_mux
+
+Top level modules:
+	cmsdk_apb_slave_mux
+
 } {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/cortexm3ds_logic.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/cortexm3ds_logic.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 -- Compiling module cortexm3ds_logic
@@ -82,12 +89,12 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	gpio
 
-} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_slave_mux.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_slave_mux.v
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_apbif.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_apbif.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module cmsdk_apb_slave_mux
+-- Compiling module gpio_apbif
 
 Top level modules:
-	cmsdk_apb_slave_mux
+	gpio_apbif
 
 } {} {}} E:/soc26prj/soc-wuxi-arm/audio/rtl/spi_module.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/audio/rtl/spi_module.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
@@ -96,13 +103,6 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	spi_module
 
-} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_apbif.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_apbif.v
-Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module gpio_apbif
-
-Top level modules:
-	gpio_apbif
-
 } {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/top.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/top.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 -- Compiling module top
@@ -110,19 +110,19 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	top
 
-} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_ctrl.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_ctrl.v
-Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module gpio_ctrl
-
-Top level modules:
-	gpio_ctrl
-
 } {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI0.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI0.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 -- Compiling module cmsdk_ahb_bm_decodeSI0
 
 Top level modules:
 	cmsdk_ahb_bm_decodeSI0
+
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_ctrl.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_ctrl.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module gpio_ctrl
+
+Top level modules:
+	gpio_ctrl
 
 } {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI1.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI1.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
@@ -138,12 +138,12 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	cmsdk_ahb_bm_decodeSI2
 
-} {} {}} E:/soc26prj/soc-wuxi-arm/audio/rtl/spi_controller.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/audio/rtl/spi_controller.v
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/InputStage.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/InputStage.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module spi_flash_apb_ctrl
+-- Compiling module InputStage
 
 Top level modules:
-	spi_flash_apb_ctrl
+	InputStage
 
 } {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/CORTEXM3INTEGRATIONDS.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/CORTEXM3INTEGRATIONDS.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
@@ -152,12 +152,12 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	CORTEXM3INTEGRATIONDS
 
-} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/InputStage.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/InputStage.v
+} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/OutputStage.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/OutputStage.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module InputStage
+-- Compiling module OutputStage
 
 Top level modules:
-	InputStage
+	OutputStage
 
 } {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_uart.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_uart.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
@@ -165,12 +165,5 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 
 Top level modules:
 	cmsdk_apb_uart
-
-} {} {}} E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/OutputStage.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/OutputStage.v
-Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module OutputStage
-
-Top level modules:
-	OutputStage
 
 } {} {}}

@@ -72,7 +72,7 @@ module testbench;
         tck = 1'b0;
         i2s_sd = 1'b0;
 
-        $readmemh("../../../cnasic_sleep/prj/keil/output/outfile.bin", u_soc.U_SRAM.memory);
+        $readmemh("./cnasic_sleep/prj/keil/output/outfile.bin", u_soc.U_SRAM.memory);
         $display("[TB] RAM loaded");
 
         #(`PCLK_PERIOD * 20);
