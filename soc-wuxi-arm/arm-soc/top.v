@@ -22,15 +22,54 @@ module top(
   output wire           uart2_txd,
 
     // Timer
-  input  wire           timer0_extin,
-  input  wire           timer1_extin
+   input  wire           timer0_extin,
+   input  wire           timer1_extin,
+
+   // I2S interface
+   input  wire           i2s_sd,
+   output reg            i2s_sck,
+   output reg            i2s_ws,
+
+   // SPI Flash interface
+   output wire           flash_cs_n,
+   output wire           flash_sclk,
+   output wire           flash_mosi,
+   input  wire           flash_miso
 
 );
 
    wire [31:0]apb_int;
    wire  [239:0] irq = {208'b0000_0000_0000_0000, apb_int};
 
-   
+   // ----------------------------------------------------------------------
+   // APB extension port wiring
+   // ----------------------------------------------------------------------
+   wire [11:0] apb_paddr;
+   wire        apb_pwrite;
+   wire [31:0] apb_pwdata;
+   wire        apb_penable;
+
+   wire        ext12_psel;
+   wire        ext13_psel;
+   wire [31:0] ext12_prdata;
+   wire        ext12_pready;
+   wire        ext12_pslverr;
+   wire [31:0] ext13_prdata;
+   wire        ext13_pready;
+   wire        ext13_pslverr;
+
+   // ----------------------------------------------------------------------
+   // I2S clock generation
+   // ----------------------------------------------------------------------
+   localparam integer PCLK_FREQ_HZ = 50_000_000;
+   localparam integer I2S_WS_HZ    = 16_000;
+   localparam integer I2S_SCK_HZ   = I2S_WS_HZ * 64;
+
+   reg [31:0] i2s_div_acc;
+   reg [5:0]  i2s_slot_cnt;
+   reg        i2s_sck_d;
+
+   wire i2s_sck_fall = ~i2s_sck & i2s_sck_d;
 
 
     //Internal wires
@@ -523,8 +562,113 @@ AHB2MEM
    
 assign hrespmi0[1:0]=2'b0;
 
+// ---------------------------------------------------------------------------
+// I2S clock generation
+// ---------------------------------------------------------------------------
+always @(posedge CLK or negedge RESETn) begin
+   if (!RESETn) begin
+      i2s_sck     <= 1'b0;
+      i2s_div_acc <= 32'd0;
+   end else begin
+      if ((i2s_div_acc + (2 * I2S_SCK_HZ)) >= PCLK_FREQ_HZ) begin
+         i2s_div_acc <= i2s_div_acc + (2 * I2S_SCK_HZ) - PCLK_FREQ_HZ;
+         i2s_sck     <= ~i2s_sck;
+      end else begin
+         i2s_div_acc <= i2s_div_acc + (2 * I2S_SCK_HZ);
+      end
+   end
+end
+
+always @(posedge CLK or negedge RESETn) begin
+   if (!RESETn) begin
+      i2s_ws       <= 1'b1;
+      i2s_slot_cnt <= 6'd0;
+      i2s_sck_d    <= 1'b0;
+   end else begin
+      i2s_sck_d <= i2s_sck;
+
+      if (i2s_sck_fall) begin
+         if (i2s_slot_cnt == 6'd31) begin
+            i2s_slot_cnt <= 6'd0;
+            i2s_ws       <= ~i2s_ws;
+         end else begin
+            i2s_slot_cnt <= i2s_slot_cnt + 6'd1;
+         end
+      end
+   end
+end
+
+// ---------------------------------------------------------------------------
+// I2S RX core
+// ---------------------------------------------------------------------------
+wire [23:0] i2s_sample_data;
+wire        i2s_sample_valid;
+
+i2s_rx_core #(
+   .SAMPLE_WIDTH (24),
+   .SLOT_WIDTH   (32),
+   .WS_POL_LEFT  (1'b0)
+) u_i2s_rx_core (
+   .rst_n        (RESETn),
+   .i2s_sck      (i2s_sck),
+   .i2s_ws       (i2s_ws),
+   .i2s_sd       (i2s_sd),
+   .sample_data  (i2s_sample_data),
+   .sample_valid (i2s_sample_valid)
+);
+
+// ---------------------------------------------------------------------------
+// Audio FIFO APB control
+// ---------------------------------------------------------------------------
+wire        audio_fifo_empty;
+wire        audio_fifo_full;
+wire [15:0] audio_fifo_level;
+
+audio_ctrl_apb #(
+   .FIFO_DEPTH (16)
+) u_audio_ctrl_apb (
+   .pclk        (CLK),
+   .presetn     (RESETn),
+   .psel        (ext12_psel),
+   .penable     (apb_penable),
+   .pwrite      (apb_pwrite),
+   .paddr       (apb_paddr),
+   .pwdata      (apb_pwdata),
+   .prdata      (ext12_prdata),
+   .pready      (ext12_pready),
+   .pslverr     (ext12_pslverr),
+   .sample_valid(i2s_sample_valid),
+   .sample_data (i2s_sample_data),
+   .fifo_empty  (audio_fifo_empty),
+   .fifo_full   (audio_fifo_full),
+   .fifo_level  (audio_fifo_level)
+);
+
+// ---------------------------------------------------------------------------
+// SPI Flash APB control
+// ---------------------------------------------------------------------------
+spi_flash_apb_ctrl u_spi_flash_apb_ctrl (
+   .pclk       (CLK),
+   .presetn    (RESETn),
+   .psel       (ext13_psel),
+   .penable    (apb_penable),
+   .pwrite     (apb_pwrite),
+   .paddr      (apb_paddr),
+   .pwdata     (apb_pwdata),
+   .prdata     (ext13_prdata),
+   .pready     (ext13_pready),
+   .pslverr    (ext13_pslverr),
+   .flash_cs_n (flash_cs_n),
+   .flash_sclk (flash_sclk),
+   .flash_mosi (flash_mosi),
+   .flash_miso (flash_miso)
+);
+
 //apb_subsystem instantiation
-cmsdk_apb_subsystem    u_apb_subsystem(
+cmsdk_apb_subsystem #(
+   .APB_EXT_PORT12_ENABLE(1),
+   .APB_EXT_PORT13_ENABLE(1)
+) u_apb_subsystem(
 	.HCLK						(CLK				),
 	.HRESETn				(RESETn			),
               		             
@@ -544,20 +688,25 @@ cmsdk_apb_subsystem    u_apb_subsystem(
 	.PCLK						(CLK				),    
 	.PCLKG					(CLK				),  
 	.PCLKEN					(1'b1				),  
-	.PRESETn				(RESETn			), 
+   .PRESETn				(RESETn			), 
+
+   .PADDR					(apb_paddr),
+   .PWRITE					(apb_pwrite),
+   .PWDATA					(apb_pwdata),
+   .PENABLE				(apb_penable),
                                      
-	.ext12_psel			(),
-	.ext13_psel			(),
+   .ext12_psel			(ext12_psel),
+   .ext13_psel			(ext13_psel),
 	.ext14_psel			(),
 	.ext15_psel			(),
                                      
-	.ext12_prdata		(),
-	.ext12_pready		(),
-	.ext12_pslverr	(),
+   .ext12_prdata		(ext12_prdata),
+   .ext12_pready		(ext12_pready),
+   .ext12_pslverr	(ext12_pslverr),
                                     
-	.ext13_prdata		(),
-	.ext13_pready		(),
-	.ext13_pslverr	(),
+   .ext13_prdata		(ext13_prdata),
+   .ext13_pready		(ext13_pready),
+   .ext13_pslverr	(ext13_pslverr),
                                        
 	.ext14_prdata		(),
 	.ext14_pready		(),

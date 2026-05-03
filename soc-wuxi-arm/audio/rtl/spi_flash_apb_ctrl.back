@@ -1,0 +1,648 @@
+module spi_flash_apb_ctrl #(
+    parameter integer SCLK_DIV      = 2,
+    parameter integer AUTO_ERASE    = 1,
+    parameter [31:0]  ERASE_TIMEOUT = 32'h00FF_FFFF,
+    parameter [31:0]  PROG_TIMEOUT  = 32'h000F_FFFF
+) (
+    input  wire        pclk,
+    input  wire        presetn,
+    input  wire        psel,
+    input  wire        penable,
+    input  wire        pwrite,
+    input  wire [11:0] paddr,
+    input  wire [31:0] pwdata,
+    output reg  [31:0] prdata,
+    output wire        pready,
+    output wire        pslverr,
+
+    output reg         flash_cs_n,
+    output reg         flash_sclk,
+    output reg         flash_mosi,
+    input  wire        flash_miso
+);
+
+function integer f_clog2;
+    input integer value;
+    integer tmp;
+    begin
+        tmp = value - 1;
+        for (f_clog2 = 0; tmp > 0; f_clog2 = f_clog2 + 1)
+            tmp = tmp >> 1;
+        if (f_clog2 == 0)
+            f_clog2 = 1;
+    end
+endfunction
+
+localparam [11:0] ADDR_START_ADDR = 12'h000;
+localparam [11:0] ADDR_BYTE_LEN   = 12'h004;
+localparam [11:0] ADDR_CTRL       = 12'h008;
+localparam [11:0] ADDR_STATUS     = 12'h00C;
+localparam [11:0] ADDR_WDATA      = 12'h010;
+localparam [11:0] ADDR_RDATA      = 12'h014;
+localparam [11:0] ADDR_DEBUG_CNT  = 12'h018;
+
+localparam integer SCLK_DIV_HALF = (SCLK_DIV / 2);
+localparam integer SCLK_DIV_W    = f_clog2(SCLK_DIV);
+
+localparam [3:0] SEQ_NONE     = 4'd0;
+localparam [3:0] SEQ_WREN     = 4'd1;
+localparam [3:0] SEQ_SE       = 4'd2;
+localparam [3:0] SEQ_RDSR     = 4'd3;
+localparam [3:0] SEQ_PP_HDR   = 4'd4;
+localparam [3:0] SEQ_READ_HDR = 4'd5;
+
+localparam [4:0] ST_IDLE        = 5'd0;
+localparam [4:0] ST_ERASE_WREN  = 5'd1;
+localparam [4:0] ST_ERASE_CMD   = 5'd2;
+localparam [4:0] ST_ERASE_POLL  = 5'd3;
+localparam [4:0] ST_WRITE_WREN  = 5'd4;
+localparam [4:0] ST_WRITE_HDR   = 5'd5;
+localparam [4:0] ST_WRITE_DATA  = 5'd6;
+localparam [4:0] ST_WRITE_POLL  = 5'd7;
+localparam [4:0] ST_READ_HDR    = 5'd8;
+localparam [4:0] ST_READ_DATA   = 5'd9;
+localparam [4:0] ST_DONE        = 5'd10;
+localparam [4:0] ST_ERROR       = 5'd11;
+
+wire wr_hit = psel & penable & pwrite;
+wire rd_hit = psel & penable & ~pwrite;
+
+wire start_wr_pulse;
+wire start_rd_pulse;
+wire abort_pulse;
+wire clr_done_pulse;
+
+wire status_wr_hit = wr_hit & (paddr == ADDR_STATUS);
+wire rdata_rd_hit  = rd_hit & (paddr == ADDR_RDATA);
+wire wdata_wr_hit  = wr_hit & (paddr == ADDR_WDATA);
+
+assign pready  = 1'b1;
+assign pslverr = 1'b0;
+
+reg [23:0] start_addr_reg;
+reg [23:0] byte_len_reg;
+
+reg        done_reg;
+reg        err_reg;
+reg        overflow_reg;
+reg        underflow_reg;
+reg        rdata_valid_reg;
+
+reg [31:0] rdata_reg;
+
+reg [23:0] addr_ptr;
+reg [23:0] bytes_left;
+reg [23:0] processed_bytes;
+
+reg [23:0] erase_addr;
+reg [23:0] erase_end;
+reg [8:0]  page_bytes_left;
+
+reg [31:0] erase_timeout_cnt;
+reg [31:0] prog_timeout_cnt;
+
+reg [31:0] wdata_buf;
+reg        wdata_buf_valid;
+reg [1:0]  wdata_byte_idx;
+
+reg [1:0]  rdata_byte_idx;
+
+reg [4:0]  state;
+
+reg [3:0]  seq_type;
+reg [2:0]  seq_idx;
+reg [2:0]  seq_len;
+reg        seq_active;
+reg        seq_done_pulse;
+reg        seq_gap;
+
+reg        spi_start;
+reg [7:0]  spi_tx_byte;
+reg        spi_done_pulse;
+reg [7:0]  spi_rx_byte;
+reg        spi_busy;
+reg [2:0]  spi_bit_cnt;
+reg [SCLK_DIV_W-1:0] spi_div_cnt;
+reg [7:0]  spi_shift_tx;
+reg [7:0]  spi_shift_rx;
+
+reg        rdsr_wip;
+
+wire wdata_ready = (state == ST_WRITE_DATA) & ~wdata_buf_valid & (bytes_left != 24'd0) & ~err_reg;
+wire rdata_valid = rdata_valid_reg;
+wire busy_flag   = (state != ST_IDLE) && (state != ST_DONE) && (state != ST_ERROR);
+wire data_active = (state == ST_WRITE_DATA) || (state == ST_READ_DATA);
+
+assign start_wr_pulse = wr_hit & (paddr == ADDR_CTRL) & pwdata[0];
+assign start_rd_pulse = wr_hit & (paddr == ADDR_CTRL) & pwdata[1];
+assign abort_pulse    = wr_hit & (paddr == ADDR_CTRL) & pwdata[2];
+assign clr_done_pulse = wr_hit & (paddr == ADDR_CTRL) & pwdata[3];
+
+wire clr_done_w1c      = status_wr_hit & pwdata[1];
+wire clr_err_w1c       = status_wr_hit & pwdata[2];
+wire clr_overflow_w1c  = status_wr_hit & pwdata[5];
+wire clr_underflow_w1c = status_wr_hit & pwdata[6];
+
+wire byte_len_align_ok = (byte_len_reg[1:0] == 2'b00);
+wire [23:0] erase_end_calc = start_addr_reg + byte_len_reg - 24'd1;
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn) begin
+        start_addr_reg <= 24'd0;
+        byte_len_reg   <= 24'd0;
+    end else begin
+        if (wr_hit & (paddr == ADDR_START_ADDR))
+            start_addr_reg <= pwdata[23:0];
+        if (wr_hit & (paddr == ADDR_BYTE_LEN))
+            byte_len_reg <= pwdata[23:0];
+    end
+end
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn) begin
+        done_reg      <= 1'b0;
+        err_reg       <= 1'b0;
+        overflow_reg  <= 1'b0;
+        underflow_reg <= 1'b0;
+    end else begin
+        done_reg <= (done_reg & ~(clr_done_pulse | clr_done_w1c)) | (state == ST_DONE);
+        err_reg  <= (err_reg & ~clr_err_w1c) | (state == ST_ERROR) |
+                    ((busy_flag) && (start_wr_pulse || start_rd_pulse)) |
+                    (start_wr_pulse && start_rd_pulse) |
+                    ((start_wr_pulse || start_rd_pulse) && ~byte_len_align_ok) |
+                    (wdata_wr_hit && ~wdata_ready);
+
+        overflow_reg <= (overflow_reg & ~clr_overflow_w1c) |
+                        (wdata_wr_hit && (state == ST_WRITE_DATA) && (bytes_left == 24'd0));
+
+        underflow_reg <= (underflow_reg & ~clr_underflow_w1c) |
+                         (rdata_rd_hit && ~rdata_valid_reg);
+    end
+end
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn) begin
+        rdata_valid_reg <= 1'b0;
+        rdata_reg       <= 32'd0;
+        rdata_byte_idx  <= 2'd0;
+    end else begin
+        if (start_rd_pulse) begin
+            rdata_valid_reg <= 1'b0;
+            rdata_reg       <= 32'd0;
+            rdata_byte_idx  <= 2'd0;
+        end else if (rdata_rd_hit && rdata_valid_reg) begin
+            rdata_valid_reg <= 1'b0;
+        end else if (state == ST_READ_DATA && spi_done_pulse) begin
+            case (rdata_byte_idx)
+                2'd0: rdata_reg[7:0]   <= spi_rx_byte;
+                2'd1: rdata_reg[15:8]  <= spi_rx_byte;
+                2'd2: rdata_reg[23:16] <= spi_rx_byte;
+                2'd3: rdata_reg[31:24] <= spi_rx_byte;
+                default: rdata_reg[7:0] <= spi_rx_byte;
+            endcase
+
+            if (rdata_byte_idx == 2'd3) begin
+                rdata_byte_idx  <= 2'd0;
+                rdata_valid_reg <= 1'b1;
+            end else begin
+                rdata_byte_idx <= rdata_byte_idx + 2'd1;
+            end
+        end
+    end
+end
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn) begin
+        wdata_buf       <= 32'd0;
+        wdata_buf_valid <= 1'b0;
+        wdata_byte_idx  <= 2'd0;
+    end else begin
+        if (start_wr_pulse) begin
+            wdata_buf       <= 32'd0;
+            wdata_buf_valid <= 1'b0;
+            wdata_byte_idx  <= 2'd0;
+        end else if (wdata_wr_hit && wdata_ready) begin
+            wdata_buf       <= pwdata;
+            wdata_buf_valid <= 1'b1;
+            wdata_byte_idx  <= 2'd0;
+        end else if (state == ST_WRITE_DATA && spi_done_pulse && wdata_buf_valid) begin
+            if (wdata_byte_idx == 2'd3) begin
+                wdata_buf_valid <= 1'b0;
+                wdata_byte_idx  <= 2'd0;
+            end else begin
+                wdata_byte_idx <= wdata_byte_idx + 2'd1;
+            end
+        end
+
+    end
+end
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn) begin
+        addr_ptr        <= 24'd0;
+        bytes_left      <= 24'd0;
+        processed_bytes <= 24'd0;
+        page_bytes_left <= 9'd0;
+    end else begin
+        if (start_wr_pulse || start_rd_pulse) begin
+            addr_ptr        <= start_addr_reg;
+            bytes_left      <= byte_len_reg;
+            processed_bytes <= 24'd0;
+            page_bytes_left <= 9'd0;
+        end else if (state == ST_WRITE_DATA && spi_done_pulse) begin
+            addr_ptr        <= addr_ptr + 24'd1;
+            bytes_left      <= bytes_left - 24'd1;
+            processed_bytes <= processed_bytes + 24'd1;
+            if (page_bytes_left != 9'd0)
+                page_bytes_left <= page_bytes_left - 9'd1;
+        end else if (state == ST_READ_DATA && spi_done_pulse) begin
+            addr_ptr        <= addr_ptr + 24'd1;
+            bytes_left      <= bytes_left - 24'd1;
+            processed_bytes <= processed_bytes + 24'd1;
+        end
+
+        if (state == ST_WRITE_WREN && seq_done_pulse) begin
+            if (bytes_left != 24'd0) begin
+                if (bytes_left < (24'd256 - {16'd0, addr_ptr[7:0]}))
+                    page_bytes_left <= bytes_left[8:0];
+                else
+                    page_bytes_left <= (9'd256 - {1'b0, addr_ptr[7:0]});
+            end
+        end
+    end
+end
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn) begin
+        erase_addr        <= 24'd0;
+        erase_end         <= 24'd0;
+        erase_timeout_cnt <= 32'd0;
+        prog_timeout_cnt  <= 32'd0;
+    end else begin
+        if (start_wr_pulse) begin
+            erase_addr        <= {start_addr_reg[23:12], 12'h000};
+            erase_end         <= {erase_end_calc[23:12], 12'h000};
+            erase_timeout_cnt <= 32'd0;
+            prog_timeout_cnt  <= 32'd0;
+        end else if (state == ST_ERASE_CMD && seq_done_pulse) begin
+            erase_timeout_cnt <= 32'd0;
+        end else if (state == ST_ERASE_POLL && seq_done_pulse) begin
+            if (rdsr_wip) begin
+                if (erase_timeout_cnt != ERASE_TIMEOUT)
+                    erase_timeout_cnt <= erase_timeout_cnt + 32'd1;
+            end else begin
+                erase_timeout_cnt <= 32'd0;
+            end
+        end else if (state == ST_WRITE_HDR && seq_done_pulse) begin
+            prog_timeout_cnt <= 32'd0;
+        end else if (state == ST_WRITE_POLL && seq_done_pulse) begin
+            if (rdsr_wip) begin
+                if (prog_timeout_cnt != PROG_TIMEOUT)
+                    prog_timeout_cnt <= prog_timeout_cnt + 32'd1;
+            end else begin
+                prog_timeout_cnt <= 32'd0;
+            end
+        end
+
+        if (state == ST_ERASE_POLL && seq_done_pulse && ~rdsr_wip) begin
+            if (erase_addr != erase_end)
+                erase_addr <= erase_addr + 24'h001000;
+        end
+    end
+end
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn) begin
+        seq_type       <= SEQ_NONE;
+        seq_idx        <= 3'd0;
+        seq_len        <= 3'd0;
+        seq_active     <= 1'b0;
+        seq_done_pulse <= 1'b0;
+        seq_gap        <= 1'b0;
+        rdsr_wip       <= 1'b0;
+    end else begin
+        seq_done_pulse <= 1'b0;
+
+        if (seq_active && spi_done_pulse && (seq_idx == (seq_len - 3'd1)))
+            seq_gap <= 1'b1;
+        else if (seq_gap)
+            seq_gap <= 1'b0;
+
+        if (!seq_active && !seq_gap) begin
+            if (state == ST_ERASE_WREN) begin
+                seq_type   <= SEQ_WREN;
+                seq_len    <= 3'd1;
+                seq_idx    <= 3'd0;
+                seq_active <= 1'b1;
+            end else if (state == ST_ERASE_CMD) begin
+                seq_type   <= SEQ_SE;
+                seq_len    <= 3'd4;
+                seq_idx    <= 3'd0;
+                seq_active <= 1'b1;
+            end else if (state == ST_ERASE_POLL) begin
+                seq_type   <= SEQ_RDSR;
+                seq_len    <= 3'd2;
+                seq_idx    <= 3'd0;
+                seq_active <= 1'b1;
+            end else if (state == ST_WRITE_WREN) begin
+                seq_type   <= SEQ_WREN;
+                seq_len    <= 3'd1;
+                seq_idx    <= 3'd0;
+                seq_active <= 1'b1;
+            end else if (state == ST_WRITE_HDR) begin
+                seq_type   <= SEQ_PP_HDR;
+                seq_len    <= 3'd4;
+                seq_idx    <= 3'd0;
+                seq_active <= 1'b1;
+            end else if (state == ST_WRITE_POLL) begin
+                seq_type   <= SEQ_RDSR;
+                seq_len    <= 3'd2;
+                seq_idx    <= 3'd0;
+                seq_active <= 1'b1;
+            end else if (state == ST_READ_HDR) begin
+                seq_type   <= SEQ_READ_HDR;
+                seq_len    <= 3'd4;
+                seq_idx    <= 3'd0;
+                seq_active <= 1'b1;
+            end
+        end
+
+        if (seq_active && spi_done_pulse) begin
+            if (seq_type == SEQ_RDSR && seq_idx == 3'd1)
+                rdsr_wip <= spi_rx_byte[0];
+
+            if (seq_idx == (seq_len - 3'd1)) begin
+                seq_active     <= 1'b0;
+                seq_done_pulse <= 1'b1;
+                seq_idx        <= 3'd0;
+            end else begin
+                seq_idx <= seq_idx + 3'd1;
+            end
+        end
+
+    end
+end
+
+always @(*) begin
+    spi_tx_byte = 8'h00;
+    case (seq_type)
+        SEQ_WREN: begin
+            spi_tx_byte = 8'h06;
+        end
+        SEQ_SE: begin
+            case (seq_idx)
+                3'd0: spi_tx_byte = 8'h20;
+                3'd1: spi_tx_byte = erase_addr[23:16];
+                3'd2: spi_tx_byte = erase_addr[15:8];
+                3'd3: spi_tx_byte = erase_addr[7:0];
+                default: spi_tx_byte = 8'h00;
+            endcase
+        end
+        SEQ_RDSR: begin
+            case (seq_idx)
+                3'd0: spi_tx_byte = 8'h05;
+                3'd1: spi_tx_byte = 8'h00;
+                default: spi_tx_byte = 8'h00;
+            endcase
+        end
+        SEQ_PP_HDR: begin
+            case (seq_idx)
+                3'd0: spi_tx_byte = 8'h02;
+                3'd1: spi_tx_byte = addr_ptr[23:16];
+                3'd2: spi_tx_byte = addr_ptr[15:8];
+                3'd3: spi_tx_byte = addr_ptr[7:0];
+                default: spi_tx_byte = 8'h00;
+            endcase
+        end
+        SEQ_READ_HDR: begin
+            case (seq_idx)
+                3'd0: spi_tx_byte = 8'h03;
+                3'd1: spi_tx_byte = addr_ptr[23:16];
+                3'd2: spi_tx_byte = addr_ptr[15:8];
+                3'd3: spi_tx_byte = addr_ptr[7:0];
+                default: spi_tx_byte = 8'h00;
+            endcase
+        end
+        default: spi_tx_byte = 8'h00;
+    endcase
+end
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn) begin
+        spi_start     <= 1'b0;
+        spi_done_pulse <= 1'b0;
+        spi_busy      <= 1'b0;
+        spi_bit_cnt   <= 3'd0;
+        spi_div_cnt   <= {SCLK_DIV_W{1'b0}};
+        spi_shift_tx  <= 8'd0;
+        spi_shift_rx  <= 8'd0;
+        flash_sclk    <= 1'b0;
+        flash_mosi    <= 1'b0;
+        spi_rx_byte   <= 8'd0;
+    end else begin
+        spi_start      <= 1'b0;
+        spi_done_pulse <= 1'b0;
+
+        if (!spi_busy) begin
+            flash_sclk <= 1'b0;
+            if (seq_active && !spi_start) begin
+                spi_start    <= 1'b1;
+                spi_busy     <= 1'b1;
+                spi_bit_cnt  <= 3'd7;
+                spi_div_cnt  <= {SCLK_DIV_W{1'b0}};
+                spi_shift_tx <= spi_tx_byte;
+                spi_shift_rx <= 8'd0;
+                flash_mosi   <= spi_tx_byte[7];
+            end else if (state == ST_WRITE_DATA && wdata_buf_valid) begin
+                spi_start    <= 1'b1;
+                spi_busy     <= 1'b1;
+                spi_bit_cnt  <= 3'd7;
+                spi_div_cnt  <= {SCLK_DIV_W{1'b0}};
+                spi_shift_tx <= (wdata_byte_idx == 2'd0) ? wdata_buf[7:0] :
+                                (wdata_byte_idx == 2'd1) ? wdata_buf[15:8] :
+                                (wdata_byte_idx == 2'd2) ? wdata_buf[23:16] :
+                                                           wdata_buf[31:24];
+                spi_shift_rx <= 8'd0;
+                flash_mosi   <= (wdata_byte_idx == 2'd0) ? wdata_buf[7] :
+                                (wdata_byte_idx == 2'd1) ? wdata_buf[15] :
+                                (wdata_byte_idx == 2'd2) ? wdata_buf[23] :
+                                                           wdata_buf[31];
+            end else if (state == ST_READ_DATA && !rdata_valid_reg && (bytes_left != 24'd0)) begin
+                spi_start    <= 1'b1;
+                spi_busy     <= 1'b1;
+                spi_bit_cnt  <= 3'd7;
+                spi_div_cnt  <= {SCLK_DIV_W{1'b0}};
+                spi_shift_tx <= 8'h00;
+                spi_shift_rx <= 8'd0;
+                flash_mosi   <= 1'b0;
+            end
+        end else begin
+            if (spi_div_cnt == SCLK_DIV_HALF - 1) begin
+                flash_sclk <= 1'b1;
+                spi_shift_rx[spi_bit_cnt] <= flash_miso;
+            end
+
+            if (spi_div_cnt == SCLK_DIV - 1) begin
+                flash_sclk <= 1'b0;
+                spi_div_cnt <= {SCLK_DIV_W{1'b0}};
+                if (spi_bit_cnt == 3'd0) begin
+                    spi_busy      <= 1'b0;
+                    spi_done_pulse <= 1'b1;
+                    spi_rx_byte   <= spi_shift_rx;
+                end else begin
+                    spi_bit_cnt <= spi_bit_cnt - 3'd1;
+                    flash_mosi  <= spi_shift_tx[spi_bit_cnt - 3'd1];
+                end
+            end else begin
+                spi_div_cnt <= spi_div_cnt + {{(SCLK_DIV_W-1){1'b0}}, 1'b1};
+            end
+        end
+    end
+end
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn) begin
+        state <= ST_IDLE;
+    end else begin
+        case (state)
+            ST_IDLE: begin
+                if (start_wr_pulse && start_rd_pulse) begin
+                    state <= ST_ERROR;
+                end else if (start_wr_pulse) begin
+                    if (!byte_len_align_ok)
+                        state <= ST_ERROR;
+                    else if (byte_len_reg == 24'd0)
+                        state <= ST_DONE;
+                    else if (AUTO_ERASE)
+                        state <= ST_ERASE_WREN;
+                    else
+                        state <= ST_WRITE_WREN;
+                end else if (start_rd_pulse) begin
+                    if (!byte_len_align_ok)
+                        state <= ST_ERROR;
+                    else if (byte_len_reg == 24'd0)
+                        state <= ST_DONE;
+                    else
+                        state <= ST_READ_HDR;
+                end
+            end
+            ST_ERASE_WREN: begin
+                if (seq_done_pulse)
+                    state <= ST_ERASE_CMD;
+            end
+            ST_ERASE_CMD: begin
+                if (seq_done_pulse)
+                    state <= ST_ERASE_POLL;
+            end
+            ST_ERASE_POLL: begin
+                if (seq_done_pulse) begin
+                    if (rdsr_wip) begin
+                        if (erase_timeout_cnt == ERASE_TIMEOUT)
+                            state <= ST_ERROR;
+                        else
+                            state <= ST_ERASE_POLL;
+                    end else begin
+                        if (erase_addr == erase_end)
+                            state <= ST_WRITE_WREN;
+                        else
+                            state <= ST_ERASE_WREN;
+                    end
+                end
+            end
+            ST_WRITE_WREN: begin
+                if (seq_done_pulse)
+                    state <= ST_WRITE_HDR;
+            end
+            ST_WRITE_HDR: begin
+                if (seq_done_pulse)
+                    state <= ST_WRITE_DATA;
+            end
+            ST_WRITE_DATA: begin
+                if (spi_done_pulse && (page_bytes_left == 9'd1)) begin
+                    state <= ST_WRITE_POLL;
+                end else if (spi_done_pulse && (bytes_left == 24'd1)) begin
+                    state <= ST_WRITE_POLL;
+                end
+            end
+            ST_WRITE_POLL: begin
+                if (seq_done_pulse) begin
+                    if (rdsr_wip) begin
+                        if (prog_timeout_cnt == PROG_TIMEOUT)
+                            state <= ST_ERROR;
+                        else
+                            state <= ST_WRITE_POLL;
+                    end else begin
+                        if (bytes_left == 24'd0)
+                            state <= ST_DONE;
+                        else
+                            state <= ST_WRITE_WREN;
+                    end
+                end
+            end
+            ST_READ_HDR: begin
+                if (seq_done_pulse)
+                    state <= ST_READ_DATA;
+            end
+            ST_READ_DATA: begin
+                if (spi_done_pulse && (bytes_left == 24'd1) && (rdata_byte_idx == 2'd3)) begin
+                    state <= ST_DONE;
+                end
+            end
+            ST_DONE: begin
+                state <= ST_IDLE;
+            end
+            ST_ERROR: begin
+                state <= ST_IDLE;
+            end
+            default: begin
+                state <= ST_IDLE;
+            end
+        endcase
+
+        if (abort_pulse) begin
+            state <= ST_IDLE;
+        end
+    end
+end
+
+always @(posedge pclk or negedge presetn) begin
+    if (!presetn)
+        flash_cs_n <= 1'b1;
+    else
+        flash_cs_n <= ~(seq_active || data_active);
+end
+
+always @(*) begin
+    prdata = 32'h0000_0000;
+    if (rd_hit) begin
+        case (paddr)
+            ADDR_START_ADDR: prdata[23:0] = start_addr_reg;
+            ADDR_BYTE_LEN:   prdata[23:0] = byte_len_reg;
+            ADDR_CTRL: begin
+                prdata[0] = 1'b0;
+                prdata[1] = 1'b0;
+                prdata[2] = 1'b0;
+                prdata[3] = 1'b0;
+            end
+            ADDR_STATUS: begin
+                prdata[0] = busy_flag;
+                prdata[1] = done_reg;
+                prdata[2] = err_reg;
+                prdata[3] = wdata_ready;
+                prdata[4] = rdata_valid;
+                prdata[5] = overflow_reg;
+                prdata[6] = underflow_reg;
+            end
+            ADDR_RDATA: begin
+                if (rdata_valid)
+                    prdata = rdata_reg;
+                else
+                    prdata = 32'h0000_0000;
+            end
+            ADDR_DEBUG_CNT: prdata[23:0] = processed_bytes;
+            default: prdata = 32'h0000_0000;
+        endcase
+    end
+end
+
+endmodule

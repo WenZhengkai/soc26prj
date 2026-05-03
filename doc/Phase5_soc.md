@@ -1,4 +1,4 @@
-# Phase3 SoC集成与联调设计文档（阶段5使用）
+# Phase5 SoC集成与联调设计文档（阶段5使用）
 
 ## 1. 目的与范围
 
@@ -120,6 +120,7 @@ DUT的SPI输出信号作为测试结果依据：
 ## 5. main.c最小闭环软件任务
 
 参考doc/Phase1_apb_define.md，完成以下流程：
+demo模板: `soc-wuxi-arm\cnasic_sleep\App\main.c`
 
 1) 配置SPI写入任务
 - START_ADDR与BYTE_LEN

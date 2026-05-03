@@ -104,58 +104,65 @@ module audio_ctrl_apb #(
 
 ## 5. spi_flash 外设定义
 
-### 5.1 功能定义（最小闭环）
-- 提供 APB 可编程 SPI FLASH 写控制通路。
-- CPU 以“配置-喂数-等待完成”模式工作：
-  1) 配置起始地址与写入总字节数。
-  2) 置位启动。
-  3) 轮询可写状态并向 `WDATA` 写入从 FIFO 读出的样本。
-  4) 轮询完成标志。
-- Phase1 仅要求顺序写，不要求随机写和读回校验。
+### 5.1 功能定义（Phase1 冻结）
+- 提供 APB 可编程 SPI FLASH 读写控制通路。
+- CPU 统一采用“配置-启动-轮询”的工作方式：
+  - 写入流程：I2S 采样 -> CPU 读 `audio_fifo` -> CPU 写 `spi_flash` -> 完成整段录音写入。
+  - 读取流程：CPU 分批次从 `spi_flash` 读取到片上内存（受内存容量限制）。
+- 读/写均为顺序模式，Phase1 不做随机访问优化。
+- 读/写任务相互独占：同一时刻只允许一个方向的任务进行。
 
 ### 5.2 寄存器映射
 基址：`0x4000_D000`
 
 | 偏移 | 寄存器名 | 属性 | 复位值 | 描述 |
 | --- | --- | --- | --- | --- |
-| 0x00 | START_ADDR | RW | 0x0000_0000 | Flash写起始地址 |
-| 0x04 | BYTE_LEN | RW | 0x0000_0000 | 本次录音写入总字节数 |
+| 0x00 | START_ADDR | RW | 0x0000_0000 | Flash 起始地址（读/写共用） |
+| 0x04 | BYTE_LEN | RW | 0x0000_0000 | 本次任务总字节数（读/写共用） |
 | 0x08 | CTRL | RW | 0x0000_0000 | 控制寄存器 |
 | 0x0C | STATUS | RO/W1C | 0x0000_0000 | 状态寄存器 |
 | 0x10 | WDATA | WO | 0x0000_0000 | 写数据入口 |
-| 0x14 | DEBUG_CNT | RO | 0x0000_0000 | 已接收写入字节计数 |
+| 0x14 | RDATA | RO | 0x0000_0000 | 读数据出口 |
+| 0x18 | DEBUG_CNT | RO | 0x0000_0000 | 已处理字节计数 |
 
 #### START_ADDR (0x00)
 - bit[23:0] `start_addr`：目标 Flash 起始地址。
 - bit[31:24]：保留。
 
 #### BYTE_LEN (0x04)
-- bit[23:0] `byte_len`：计划写入总字节数。
+- bit[23:0] `byte_len`：本次任务总字节数。
 - bit[31:24]：保留。
 
 #### CTRL (0x08)
-- bit[0] `start`：写1启动一次写任务（硬件可自清零或由软件清零，建议自清零）。
-- bit[1] `abort`：写1请求终止本次任务（自清零）。
-- bit[2] `clr_done`：写1清除 done 状态（自清零）。
-- bit[31:3]：保留。
+- bit[0] `start_wr`：写1启动一次写任务（自清零）。
+- bit[1] `start_rd`：写1启动一次读任务（自清零）。
+- bit[2] `abort`：写1请求终止当前任务（自清零）。
+- bit[3] `clr_done`：写1清除 done 状态（自清零）。
+- bit[31:4]：保留。
 
 #### STATUS (0x0C)
 - bit[0] `busy`：控制器忙。
 - bit[1] `done`：任务完成锁存；W1C 清除。
 - bit[2] `err`：错误锁存（SPI超时/非法流程）；W1C 清除。
 - bit[3] `wdata_ready`：可接受新的 `WDATA` 写入。
-- bit[4] `overflow`：写入字节超过 `BYTE_LEN` 置位；W1C 清除。
-- bit[31:5]：保留。
+- bit[4] `rdata_valid`：`RDATA` 有效，可读取。
+- bit[5] `overflow`：写入字节超过 `BYTE_LEN` 置位；W1C 清除。
+- bit[6] `underflow`：读任务时 CPU 在无有效 `RDATA` 时读出，置位；W1C 清除。
+- bit[31:7]：保留。
 
 #### WDATA (0x10)
-- bit[31:0] `wdata`：CPU写入数据。
+- bit[31:0] `wdata`：CPU 写入数据。
 - 写行为：当 `wdata_ready=1` 时接受；否则忽略并置 `err`。
 - 数据组织约束（冻结）：
   - CPU 将 24bit 音频样本按 32bit 对齐写入（低 24bit 有效，高 8bit 填0）。
   - `BYTE_LEN` 按实际写入字节统计（每样本按 4 字节计）。
 
-#### DEBUG_CNT (0x14)
-- bit[23:0] `written_bytes`：本次任务已接收并提交写入的字节计数。
+#### RDATA (0x14)
+- bit[31:0] `rdata`：CPU 读取数据。
+- 读行为：当 `rdata_valid=1` 时返回有效数据并弹出 1 个字；否则返回 0 并置 `underflow`。
+
+#### DEBUG_CNT (0x18)
+- bit[23:0] `processed_bytes`：本次任务已处理字节计数（读/写共用）。
 - bit[31:24]：保留。
 
 ### 5.3 模块端口定义（建议）
@@ -182,7 +189,7 @@ module spi_flash_apb_ctrl (
 
 端口约束说明：
 - APB 侧同样采用 `pready=1'b1` 简化总线握手。
-- SPI 时序发生器、页写状态机在模块内实现，Phase1 不暴露复杂配置寄存器。
+  - SPI 时序发生器、页写/顺序读状态机在模块内实现，Phase1 不暴露复杂配置寄存器。
 
 ## 6. APB数据流与软件轮询流程（冻结）
 
@@ -193,14 +200,16 @@ module spi_flash_apb_ctrl (
 4. CPU 轮询 `spi_flash.STATUS.wdata_ready`。
 5. 若可写：CPU 将样本打包为 32bit 写入 `spi_flash.WDATA`。
 6. 循环至达到目标样本数，最终轮询 `spi_flash.STATUS.done`。
+7. 录音完成后，CPU 分批次启动 `spi_flash` 读任务，将数据读入片上内存缓冲区。
+8. 每读取一段数据，在 Keil 调试模式下进入断点，手动 SAVE 当前内存窗口到本地文件。
 
 ### 6.2 CPU最小伪代码
 
 ```c
-// 1) 配置flash写任务
+// 1) 配置 flash 写任务
 WR32(SPI_BASE + START_ADDR, rec_start_addr);
 WR32(SPI_BASE + BYTE_LEN,   total_samples * 4);
-WR32(SPI_BASE + CTRL,       0x1); // start
+WR32(SPI_BASE + CTRL,       0x1); // start_wr
 
 // 2) 轮询搬运
 for (i = 0; i < total_samples; i++) {
@@ -220,13 +229,36 @@ while ((RD32(SPI_BASE + STATUS) & (1u << 1)) == 0) {
     ;
 }
 WR32(SPI_BASE + STATUS, (1u << 1)); // W1C done
+
+// 4) 分批读取并导出（示例）
+for (offset = 0; offset < total_samples * 4; offset += chunk_bytes) {
+  // chunk_bytes 受片上内存容量限制
+  WR32(SPI_BASE + START_ADDR, rec_start_addr + offset);
+  WR32(SPI_BASE + BYTE_LEN,   chunk_bytes);
+  WR32(SPI_BASE + CTRL,       0x2); // start_rd
+
+  for (i = 0; i < chunk_bytes / 4; i++) {
+    while ((RD32(SPI_BASE + STATUS) & (1u << 4)) == 0) {
+      ;
+    }
+    buf[i] = RD32(SPI_BASE + RDATA);
+  }
+
+  while ((RD32(SPI_BASE + STATUS) & (1u << 1)) == 0) {
+    ;
+  }
+  WR32(SPI_BASE + STATUS, (1u << 1)); // W1C done
+
+  // Keil 调试模式下在此处断点，手动 SAVE buf[]
+}
 ```
 
 ## 7. 与后续阶段接口约束
 - 本文档冻结以下接口语义，后续 RTL 与软件需严格保持：
   - `audio_fifo.DATA`：读即弹出一个样本
   - `spi_flash.WDATA`：写入数据入口，受 `wdata_ready` 节流
-  - 状态位 `done/err/overflow` 采用 W1C 清除
+  - `spi_flash.RDATA`：读出数据入口，受 `rdata_valid` 节流
+  - 状态位 `done/err/overflow/underflow` 采用 W1C 清除
 - 后续可扩展项（不影响本冻结基线）：
   - 增加中断寄存器 `INT_EN/INT_ST`
   - 增加 DMA 模式

@@ -82,26 +82,12 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	BusMatrix3x3_default_slave
 
-} {} {}} ./arm-soc/test.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/test.v
+} {} {}} ./arm-soc/cortexm3ds_logic.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/cortexm3ds_logic.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module test
+-- Compiling module cortexm3ds_logic
 
 Top level modules:
-	test
-
-} {} {}} ./arm-soc/matrix/BusMatrix3x3.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/BusMatrix3x3.v
-Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module BusMatrix3x3
-
-Top level modules:
-	BusMatrix3x3
-
-} {} {}} ./arm-soc/apb/gpio.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio.v
-Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module gpio
-
-Top level modules:
-	gpio
+	cortexm3ds_logic
 
 } {} {}} ./arm-soc/apb/cmsdk_apb_slave_mux.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/cmsdk_apb_slave_mux.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
@@ -110,12 +96,19 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	cmsdk_apb_slave_mux
 
-} {} {}} ./arm-soc/cortexm3ds_logic.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/cortexm3ds_logic.v
+} {} {}} ./arm-soc/apb/gpio.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module cortexm3ds_logic
+-- Compiling module gpio
 
 Top level modules:
-	cortexm3ds_logic
+	gpio
+
+} {} {}} ./arm-soc/matrix/BusMatrix3x3.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/BusMatrix3x3.v
+Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
+-- Compiling module BusMatrix3x3
+
+Top level modules:
+	BusMatrix3x3
 
 } {} {}} ./arm-soc/apb/gpio_apbif.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_apbif.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
@@ -124,12 +117,12 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 Top level modules:
 	gpio_apbif
 
-} {} {}} ./arm-soc/top.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/top.v
+} {} {}} ./arm-soc/apb/gpio_ctrl.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_ctrl.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module top
+-- Compiling module gpio_ctrl
 
 Top level modules:
-	top
+	gpio_ctrl
 
 } {} {}} ./arm-soc/matrix/cmsdk_ahb_bm_decodeSI0.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/matrix/cmsdk_ahb_bm_decodeSI0.v
 Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
@@ -137,12 +130,5 @@ Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
 
 Top level modules:
 	cmsdk_ahb_bm_decodeSI0
-
-} {} {}} ./arm-soc/apb/gpio_ctrl.v {1 {vlog -work work -vopt -stats=none E:/soc26prj/soc-wuxi-arm/arm-soc/apb/gpio_ctrl.v
-Model Technology ModelSim SE-64 vlog 10.6d Compiler 2018.02 Feb 24 2018
--- Compiling module gpio_ctrl
-
-Top level modules:
-	gpio_ctrl
 
 } {} {}}
