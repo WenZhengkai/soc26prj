@@ -15,13 +15,20 @@ flash_sclk  - PIN_AA2
 flash_gnd   - GND
 flash_vdd   - VDD
 
-uart1_rxd   -       - u_tx
-uart1_txd   -       - u_rx
+uart1_rxd   -  PIN_Y7     - u_tx
+uart1_txd   -  PIN_Y8     - u_rx
 
 ### 上板演示步骤
-* 连接
+* 连接 fpga数据线, arm仿真器, uart转接口
 * 打开Quartus工程
 * 下载二进制文件到fpga
+* 打开RealTerm
+    - 调整波特率,端口
+    - 打开Capture/Start Overwrites
+* 打开soc-wuxi-arm\audio\tb\Phase6_fpga\keil_test_final 编译, debug模式运行
+* 录音
+* 运行soc-wuxi-arm\audio\tb\Phase6_fpga\wav_gen\uart_to_wav.py
+* 播放录音output.wav
 
 ## SoC完整功能仿真测试
 * 进入`soc-wuxi-arm\audio\tb\Phase5_soc_spi_read`

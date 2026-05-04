@@ -1,3 +1,10 @@
 {
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "disabled",
+    "python-envs.pythonProjects": [
+        {
+            "path": "soc-wuxi-arm/audio/tb/Phase6_fpga/wav_gen/uart_to_wav.py",
+            "envManager": "ms-python.python:venv",
+            "packageManager": "ms-python.python:pip"
+        }
+    ]
 }

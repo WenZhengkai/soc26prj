@@ -1,0 +1,45 @@
+Dependencies for Project 'cnasic_sleep', Target 'cnasic_sleep': (DO NOT MODIFY !)
+F (..\..\App\delay.c)(0x5B038664)(--c99 -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I ..\..\App\inc -I ..\..\Chip\CMSIS -I ..\..\Chip\Hal_lib\inc -I ..\..\Chip\Startup\inc-I.\RTE\_cnasic_sleep-ID:\Keil_v5\ARM\PACK\Keil\V2M-MPS2_CMx_BSP\1.7.0\Device\CMSDK_CM3\Include-ID:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="524" -DCMSDK_CM3-o .\objects\delay.o --omf_browse .\objects\delay.crf --depend .\objects\delay.d)
+I (..\..\App\inc\delay.h)(0x5B6CE934)
+I (..\..\Chip\Startup\inc\soc.h)(0x5B0237B6)
+I (..\..\Chip\CMSIS\core_cm3.h)(0x5B038070)
+I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (..\..\Chip\Hal_lib\inc\nvic.h)(0x5AD062FC)
+F (..\..\App\main.c)(0x69F8603F)(--c99 -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I ..\..\App\inc -I ..\..\Chip\CMSIS -I ..\..\Chip\Hal_lib\inc -I ..\..\Chip\Startup\inc-I.\RTE\_cnasic_sleep-ID:\Keil_v5\ARM\PACK\Keil\V2M-MPS2_CMx_BSP\1.7.0\Device\CMSDK_CM3\Include-ID:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="524" -DCMSDK_CM3-o .\objects\main.o --omf_browse .\objects\main.crf --depend .\objects\main.d)
+I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+F (..\..\Chip\Hal_lib\gpio.c)(0x69CF28ED)(--c99 -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I ..\..\App\inc -I ..\..\Chip\CMSIS -I ..\..\Chip\Hal_lib\inc -I ..\..\Chip\Startup\inc-I.\RTE\_cnasic_sleep-ID:\Keil_v5\ARM\PACK\Keil\V2M-MPS2_CMx_BSP\1.7.0\Device\CMSDK_CM3\Include-ID:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="524" -DCMSDK_CM3-o .\objects\gpio.o --omf_browse .\objects\gpio.crf --depend .\objects\gpio.d)
+I (..\..\Chip\Hal_lib\inc\gpio.h)(0x69CE772D)
+I (..\..\Chip\Startup\inc\soc.h)(0x5B0237B6)
+I (..\..\Chip\CMSIS\core_cm3.h)(0x5B038070)
+I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (..\..\Chip\Hal_lib\inc\nvic.h)(0x5AD062FC)
+I (..\..\App\inc\delay.h)(0x5B6CE934)
+F (..\..\Chip\Hal_lib\mem.c)(0x5B62735C)(--c99 -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I ..\..\App\inc -I ..\..\Chip\CMSIS -I ..\..\Chip\Hal_lib\inc -I ..\..\Chip\Startup\inc-I.\RTE\_cnasic_sleep-ID:\Keil_v5\ARM\PACK\Keil\V2M-MPS2_CMx_BSP\1.7.0\Device\CMSDK_CM3\Include-ID:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="524" -DCMSDK_CM3-o .\objects\mem.o --omf_browse .\objects\mem.crf --depend .\objects\mem.d)
+I (..\..\Chip\Hal_lib\inc\mem.h)(0x5B62735C)
+I (..\..\Chip\Startup\inc\soc.h)(0x5B0237B6)
+I (..\..\Chip\CMSIS\core_cm3.h)(0x5B038070)
+I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (..\..\Chip\Hal_lib\inc\nvic.h)(0x5AD062FC)
+F (..\..\Chip\Hal_lib\nvic.c)(0x5AD062B2)(--c99 -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I ..\..\App\inc -I ..\..\Chip\CMSIS -I ..\..\Chip\Hal_lib\inc -I ..\..\Chip\Startup\inc-I.\RTE\_cnasic_sleep-ID:\Keil_v5\ARM\PACK\Keil\V2M-MPS2_CMx_BSP\1.7.0\Device\CMSDK_CM3\Include-ID:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="524" -DCMSDK_CM3-o .\objects\nvic.o --omf_browse .\objects\nvic.crf --depend .\objects\nvic.d)
+I (..\..\Chip\Hal_lib\inc\nvic.h)(0x5AD062FC)
+I (..\..\Chip\Startup\inc\soc.h)(0x5B0237B6)
+I (..\..\Chip\CMSIS\core_cm3.h)(0x5B038070)
+I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+F (..\..\Chip\Hal_lib\timer.c)(0x5B6176E2)(--c99 -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I ..\..\App\inc -I ..\..\Chip\CMSIS -I ..\..\Chip\Hal_lib\inc -I ..\..\Chip\Startup\inc-I.\RTE\_cnasic_sleep-ID:\Keil_v5\ARM\PACK\Keil\V2M-MPS2_CMx_BSP\1.7.0\Device\CMSDK_CM3\Include-ID:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="524" -DCMSDK_CM3-o .\objects\timer.o --omf_browse .\objects\timer.crf --depend .\objects\timer.d)
+I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (..\..\Chip\Hal_lib\inc\drv_timer.h)(0x5B617776)
+I (..\..\Chip\Hal_lib\inc\timer.h)(0x5B6178EA)
+I (..\..\Chip\Startup\inc\soc.h)(0x5B0237B6)
+I (..\..\Chip\CMSIS\core_cm3.h)(0x5B038070)
+I (..\..\Chip\Hal_lib\inc\nvic.h)(0x5AD062FC)
+I (..\..\Chip\Hal_lib\inc\dw_timer.h)(0x5B61777C)
+I (D:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x588B8344)
+F (..\..\Chip\Hal_lib\usart.c)(0x5B61737E)(--c99 -c --cpu Cortex-M3 -g -O0 --apcs=interwork --split_sections -I ..\..\App\inc -I ..\..\Chip\CMSIS -I ..\..\Chip\Hal_lib\inc -I ..\..\Chip\Startup\inc-I.\RTE\_cnasic_sleep-ID:\Keil_v5\ARM\PACK\Keil\V2M-MPS2_CMx_BSP\1.7.0\Device\CMSDK_CM3\Include-ID:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="524" -DCMSDK_CM3-o .\objects\usart.o --omf_browse .\objects\usart.crf --depend .\objects\usart.d)
+I (D:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x588B8344)
+I (D:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x588B8344)
+I (..\..\Chip\Hal_lib\inc\drv_usart.h)(0x5ACB285A)
+I (..\..\Chip\Hal_lib\inc\usart.h)(0x5B6CE8F8)
+I (..\..\Chip\Startup\inc\soc.h)(0x5B0237B6)
+I (..\..\Chip\CMSIS\core_cm3.h)(0x5B038070)
+I (..\..\Chip\Hal_lib\inc\nvic.h)(0x5AD062FC)
+F (..\..\Chip\Startup\keil\cnasic_soc.s)(0x5CC413AC)(--cpu Cortex-M3 -g --apcs=interwork -I.\RTE\_cnasic_sleep-ID:\Keil_v5\ARM\PACK\Keil\V2M-MPS2_CMx_BSP\1.7.0\Device\CMSDK_CM3\Include-ID:\Keil_v5\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 524" --pd "CMSDK_CM3 SETA 1"--list .\listings\cnasic_soc.lst --xref -o .\objects\cnasic_soc.o --depend .\objects\cnasic_soc.d)
