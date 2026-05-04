@@ -1,3 +1,28 @@
+## SoC上板测试
+
+### 管脚连接
+i2s_sck - PIN_AA15
+i2s_sd  - PIN_W13
+i2s_ws  - PIN_AB13
+i2s_lr  - GND
+i2s_gnd - GND
+i2s_vdd - VDD
+
+flash_cs_n  - PIN_Y5
+flash_miso  - PIN_Y4
+flash_mosi  - PIN_Y3
+flash_sclk  - PIN_AA2
+flash_gnd   - GND
+flash_vdd   - VDD
+
+uart1_rxd   -       - u_tx
+uart1_txd   -       - u_rx
+
+### 上板演示步骤
+* 连接
+* 打开Quartus工程
+* 下载二进制文件到fpga
+
 ## SoC完整功能仿真测试
 * 进入`soc-wuxi-arm\audio\tb\Phase5_soc_spi_read`
 * 使用Keil打开cnasic_sleep

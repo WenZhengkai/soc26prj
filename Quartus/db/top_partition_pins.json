@@ -12,6 +12,26 @@
 					"strict" : false
 				},
 				{
+					"name" : "i2s_sck",
+					"strict" : false
+				},
+				{
+					"name" : "i2s_ws",
+					"strict" : false
+				},
+				{
+					"name" : "flash_cs_n",
+					"strict" : false
+				},
+				{
+					"name" : "flash_sclk",
+					"strict" : false
+				},
+				{
+					"name" : "flash_mosi",
+					"strict" : false
+				},
+				{
 					"name" : "TMS",
 					"strict" : false
 				},
@@ -64,11 +84,19 @@
 					"strict" : false
 				},
 				{
+					"name" : "flash_miso",
+					"strict" : false
+				},
+				{
 					"name" : "timer0_extin",
 					"strict" : false
 				},
 				{
 					"name" : "uart1_rxd",
+					"strict" : false
+				},
+				{
+					"name" : "i2s_sd",
 					"strict" : false
 				}
 			]

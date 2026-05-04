@@ -1,0 +1,35 @@
+
+State Machine - |top|spi_flash_apb_ctrl:u_spi_flash_apb_ctrl|state
+Name state.ST_RD_DATA_WAIT state.ST_RD_DATA_START state.ST_RD_ADDR_WAIT state.ST_RD_ADDR_START state.ST_RD_CMD_WAIT state.ST_RD_CMD_START state.ST_ABORT state.ST_ERROR state.ST_FINISH state.ST_PP_DATA_WAIT state.ST_PP_DATA_START state.ST_PP_DATA_NEED state.ST_PP_CMD_WAIT state.ST_PP_CMD_START state.ST_PAGE_PREP state.ST_POLL_CHECK state.ST_POLL_DUMMY_WAIT state.ST_POLL_DUMMY_START state.ST_POLL_CMD_WAIT state.ST_POLL_CMD_START state.ST_ERASE_CMD_WAIT state.ST_ERASE_CMD_START state.ST_WREN_WAIT state.ST_WREN_START state.ST_ERASE_CHECK state.ST_IDLE 
+state.ST_IDLE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+state.ST_ERASE_CHECK 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
+state.ST_WREN_START 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
+state.ST_WREN_WAIT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
+state.ST_ERASE_CMD_START 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
+state.ST_ERASE_CMD_WAIT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
+state.ST_POLL_CMD_START 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
+state.ST_POLL_CMD_WAIT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
+state.ST_POLL_DUMMY_START 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+state.ST_POLL_DUMMY_WAIT 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+state.ST_POLL_CHECK 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
+state.ST_PAGE_PREP 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_PP_CMD_START 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_PP_CMD_WAIT 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_PP_DATA_NEED 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_PP_DATA_START 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_PP_DATA_WAIT 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_FINISH 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_ERROR 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_ABORT 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_RD_CMD_START 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_RD_CMD_WAIT 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_RD_ADDR_START 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_RD_ADDR_WAIT 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_RD_DATA_START 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.ST_RD_DATA_WAIT 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |top|i2s_rx_core:u_i2s_rx_core|state
+Name state.IDLE state.RIGT state.LEFT 
+state.IDLE 0 0 0 
+state.LEFT 1 0 1 
+state.RIGT 1 1 0 
