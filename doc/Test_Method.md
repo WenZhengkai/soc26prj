@@ -27,8 +27,10 @@ uart1_txd   -  PIN_Y8     - u_rx
     - 打开Capture/Start Overwrites
 * 打开soc-wuxi-arm\audio\tb\Phase6_fpga\keil_test_final 编译, debug模式运行
 * 录音
-* 运行soc-wuxi-arm\audio\tb\Phase6_fpga\wav_gen\uart_to_wav.py
-* 播放录音output.wav
+* 运行soc-wuxi-arm\audio\tb\Phase6_fpga\wav_gen\下的python转换文件
+    - python uart_to_wav_shift.py --shift left
+    - 因为i2s采样时序存在错误, 需要后处理偏移补偿
+* 播放录音output-shift.wav
 
 ## SoC完整功能仿真测试
 * 进入`soc-wuxi-arm\audio\tb\Phase5_soc_spi_read`

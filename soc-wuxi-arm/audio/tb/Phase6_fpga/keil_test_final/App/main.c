@@ -20,7 +20,7 @@
 #define UART_CTRL_TX_EN     (1u << 0)
 
 #define UART_PCLK_HZ    50000000u
-#define UART_BAUDRATE   115200u
+#define UART_BAUDRATE   921600u
 
 #define SAMPLE_RATE_HZ  16000u
 #define RECORD_SECONDS  10u
