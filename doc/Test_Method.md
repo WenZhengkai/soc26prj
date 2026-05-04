@@ -1,6 +1,15 @@
 ## SoC上板测试
 
 ### 管脚连接
+
+CLK     - PIN_N14
+RESETn  - PIN_A7
+
+TCK     - PIN_W8
+TDI     - PIN_W10
+TDO     - PIN_W7
+TMS     - PIN_W9
+
 i2s_sck - PIN_AA15
 i2s_sd  - PIN_W13
 i2s_ws  - PIN_AB13
@@ -23,7 +32,8 @@ uart1_txd   -  PIN_Y8     - u_rx
 * 打开Quartus工程
 * 下载二进制文件到fpga
 * 打开RealTerm
-    - 调整波特率,端口
+    - 调整波特率(921600),端口(COM7), Capture/File:(E:\soc26prj\soc-wuxi-arm\audio\tb\Phase6_fpga\wav_gen\data.txt)
+    - Capture/ 勾选 `Capture as Hex`
     - 打开Capture/Start Overwrites
 * 打开soc-wuxi-arm\audio\tb\Phase6_fpga\keil_test_final 编译, debug模式运行
 * 录音
